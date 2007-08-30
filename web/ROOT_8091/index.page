@@ -1,0 +1,41 @@
+200
+Content-Type: text/html
+
+<html>
+  <head>
+    <title>WEBSRV Admin Page</title>
+  </head>
+  <body>
+    <h1>WEBSRV Admin Page</h1>
+    <table>
+      <tr>
+        <td span="6">Server Name : ${server.name}</td>
+      </tr>
+      <tr>
+        <td span="6">Configured listeners</td>
+      </tr>
+      <tr>
+        <td>Address</td>
+        <td>Port</td>
+        <td>#Connected</td>
+        <td>#Connections</td>
+        <td>#Requests</td>
+        <td>Started?</td>
+      </tr>
+      %{listener=server.listeners}
+        <tr>
+          <td>${listener.address}</td>
+          <td>${listener.port}</td>
+          <td>${listener.connectedCount}</td>
+          <td>${listener.connectionCount}</td>
+          <td>${listener.requestCount}</td>
+          <td>
+            ${listener.running}
+            <a href="?action=server.listeners[${listener_INDEX}].start">start</a>
+            <a href="?action=stop">stop</a>
+          </td>
+        </tr>
+      %{listener}
+  </body>
+</html>
+
