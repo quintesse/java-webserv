@@ -96,20 +96,24 @@ public class HttpResponseImpl implements HttpResponse {
 		setHeader("Content-Type", "text/plain; charset=UTF-8");
 	}
 
+	@Override
 	public HttpResponseCode getResponseCode() {
 		return responseCode;
 	}
 
+	@Override
 	public void setResponseCode(HttpResponseCode responseCode) {
 		checkCommitted("Can't change response code");
 		this.responseCode = responseCode;
 	}
 
+	@Override
 	public String getContentType() {
 		ContentType result = getContentTypeAndEncoding();
 		return result.contentType;
 	}
 
+	@Override
 	public synchronized void setContentType(String contentType) {
 		checkCommitted("Can't change content type");
 		ContentType result = getContentTypeAndEncoding();
@@ -117,11 +121,13 @@ public class HttpResponseImpl implements HttpResponse {
 		updateContentType(result);
 	}
 
+	@Override
 	public String getCharacterEncoding() {
 		ContentType result = getContentTypeAndEncoding();
 		return result.characterEncoding;
 	}
 
+	@Override
 	public synchronized void setCharacterEncoding(String characterEncoding) {
 		checkCommitted("Can't change character encoding");
 		ContentType result = getContentTypeAndEncoding();
@@ -129,26 +135,32 @@ public class HttpResponseImpl implements HttpResponse {
 		updateContentType(result);
 	}
 
+	@Override
 	public String getHeader(String key) {
 		return headers.get(key.toLowerCase());
 	}
 
+	@Override
 	public void setHeader(String key, String value) {
 		headers.put(key.toLowerCase(), value);
 	}
 
+	@Override
 	public void removeHeader(String key) {
 		headers.remove(key.toLowerCase());
 	}
 
+	@Override
 	public Set<String> getHeaderNames() {
 		return headers.keySet();
 	}
 
+	@Override
 	public int getBufferSize() {
 		return bufferSize;
 	}
 
+	@Override
 	public synchronized void setBufferSize(int bufferSize) {
 		if (this.bufferedOutput != null) {
 			throw new IllegalStateException("Output buffer already exists");
@@ -156,20 +168,24 @@ public class HttpResponseImpl implements HttpResponse {
 		this.bufferSize = bufferSize;
 	}
 
+	@Override
 	public synchronized OutputStream getOutputStream() {
 		initOuput();
 		return bufferedOutput;
 	}
 
+	@Override
 	public synchronized PrintWriter getWriter() {
 		initOuput();
 		return writer;
 	}
 
+	@Override
 	public synchronized boolean isCommitted() {
 		return (bufferedOutput != null) && (bufferedOutput.countBytesWritten() > 0);
 	}
 
+	@Override
 	public synchronized void reset() {
 		if  (bufferedOutput != null) {
     		bufferedOutput.reset();
@@ -279,6 +295,7 @@ public class HttpResponseImpl implements HttpResponse {
 		return fmt.format(date);
 	}
 
+	@Override
 	public void sendError(HttpResponseCode resultCode, String message) throws IOException {
 		logger.info("SENDING ERROR #" + resultCode + " : " + message);
 		try {
@@ -311,6 +328,7 @@ public class HttpResponseImpl implements HttpResponse {
 		throw new PrematureEOFException();
 	}
 	
+	@Override
 	public void sendRedirect(String url) throws IOException {
 		HttpResponseCode resultCode = HttpResponseCode.CODE_TEMPORARY_REDIRECT;
 		logger.info("SENDING REDIRECT #" + resultCode + " : " + url);
@@ -399,27 +417,33 @@ public class HttpResponseImpl implements HttpResponse {
 		 */
 		private void flushBuffer() throws IOException {
 			if (count > 0) {
-				//String chrs = new String(buf, "iso8859-1");
-				//System.out.println("Writing #" + count + " bytes");
-				//for (int i = 0; i < count; i++) {
-				//	System.out.print(chrs.charAt(i));
-				//}
-				//System.out.println("--DONE--");
-				if (countWritten == 0) {
-					// The very first time
-					writeResultAndHeaders(out);
-					// Shall we use chunks?
-					chunked = "chunked".equalsIgnoreCase(getHeader("Transfer-Encoding"));
-				}
-				if (chunked) {
-					writeChunkSize(count);
-				}
-				out.write(buf, 0, count);
-				countWritten += count;
+				writeBytes(buf, 0, count);
 				count = 0;
 			}
 		}
 
+		/**
+		 * Writing the data in the buffer to the output stream that we wrap.
+		 * If this is the first time that anything gets written to the output
+		 * we first write the proper result and response headers. If chunked
+		 * transfers are enabled the proper information will be inserted
+		 * into the output stream
+		 * @throws java.io.IOException Is thrown when the data could not be written
+		 */
+		private void writeBytes(byte[] b, int off, int len) throws IOException {
+			if (countWritten == 0) {
+				// The very first time
+				writeResultAndHeaders(out);
+				// Shall we use chunks?
+				chunked = "chunked".equalsIgnoreCase(getHeader("Transfer-Encoding"));
+			}
+			if (chunked) {
+				writeChunkSize(len);
+			}
+			out.write(b, off, len);
+			countWritten += len;
+		}
+		
 		@Override
 		public synchronized void write(int b) throws IOException {
 			if (count >= buf.length) {
@@ -435,8 +459,7 @@ public class HttpResponseImpl implements HttpResponse {
 				flush the output buffer and then write the data directly.
 				In this way buffered streams will cascade harmlessly. */
 				flushBuffer();
-				out.write(b, off, len);
-				countWritten += len;
+				writeBytes(b, off, len);
 				return;
 			}
 			if (len > buf.length - count) {
@@ -456,8 +479,7 @@ public class HttpResponseImpl implements HttpResponse {
 		public void close() throws IOException {
 			if (chunked) {
 				// Write final empty chunk
-				//writeChunkSize(0);
-				// Write the final CRLF to terminate the trailer
+				// (NB: The extra leading CRLF is necessary for IE)
 				String finale = CRLF + "0" + CRLF + CRLF;
 				byte[] crlfBuf = finale.getBytes("UTF-8");
 				out.write(crlfBuf, 0, crlfBuf.length);

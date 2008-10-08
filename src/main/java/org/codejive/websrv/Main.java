@@ -64,6 +64,7 @@ public class Main {
 			mimeTypes.getMimeTypes().add(new MimeType("image/gif", defaultHandler, "gif"));
 			mimeTypes.getMimeTypes().add(new MimeType("image/jpg", defaultHandler, "jpg"));
 			mimeTypes.getMimeTypes().add(new MimeType("image/png", defaultHandler, "png"));
+			mimeTypes.getMimeTypes().add(new MimeType("image/x-icon", defaultHandler, "ico"));
 			mimeTypes.getMimeTypes().add(new MimeType("x-application/x-websrv-page", pageHandler, "page"));
 			serverConfig.setMimeTypes(mimeTypes);
 			
