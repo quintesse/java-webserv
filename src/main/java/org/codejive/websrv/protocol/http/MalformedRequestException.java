@@ -25,23 +25,23 @@ package org.codejive.websrv.protocol.http;
 import java.io.IOException;
 
 /**
- *
+ * This exception will be thrown when an incoming client request can
+ * not be parsed and converted into a HttpRequest object.
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
-class MalformedRequestException extends IOException {
+public class MalformedRequestException extends IOException {
 
+	/**
+	 * Creates a new instance
+	 */
 	public MalformedRequestException() {
 	}
 
+	/**
+	 * Creates a new instance using the given message
+	 * @param message The exception message
+	 */
 	public MalformedRequestException(String message) {
 		super(message);
-	}
-
-	public MalformedRequestException(Throwable cause) {
-		super(cause);
-	}
-
-	public MalformedRequestException(String message, Throwable cause) {
-		super(message, cause);
 	}
 }

@@ -129,12 +129,12 @@ public abstract class ThreadedProtocolListener extends Listener {
 	}
 
 	/**
-	 * Signal the listener to deactive. This will close socket the listener
+	 * Signal the listener to shut down. This will close socket the listener
 	 * uses to accept connections and will stop the listener thread and will
 	 * try to shut down any active protocol handlers
 	 */
 	@Override
-	public void stop() {
+	public void shutdown() {
 		executor.shutdownNow();
 		super.stop();
 	}

@@ -26,16 +26,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
+ * This matcher checks paths against a simple expression with the following format:
+ * <li>Any text will simply match that text in the path</li>
+ * <li>A single asterisk (*) will match any file name</li>
+ * <li>A double asterisk (**) will match a path with any number of elements</li>
+ * This means that:
+ * <li><b>/test/foo</b> only matches <b>/test/foo</b></li>
+ * <li><b>/test/*</b> matches <b>/test/foo</b> and <b>/test/bar</b> but not
+ * <b>/test/xxx</b> nor <b>/test/foo/bar</b></li>
+ * <li><b>/test/**</b> matches <b>/test/foo</b> and <b>/test/bar</b> and
+ * <b>/test/foo/bar</b> but not <b>/xxx/foo</b></li>
+ * If a match was made normally the result of <code>matches()</code> is the path
+ * that was passed to it, but it is possible to only return part of the path by
+ * introducing parenthesis in the pattern around the part that we're interested in:
+ * <li><b>/test(/**)</b> matches <b>/test/foo/bar</b> but will return <b>/foo/bar</b></li>
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class SimplePathMatcher extends PathMatcher {
 
 	private transient Pattern compiledPattern;
 	
+	/**
+	 * Creates a new SimplePathMatcher
+	 */
 	public SimplePathMatcher() {
 	}
 
+	/**
+	 * Creates a new SimplePathMatcher
+	 * @param pattern the pattern to use for path matching
+	 */
 	public SimplePathMatcher(String pattern) {
 		super(pattern);
 		String regexp = pattern.replace(".", "\\.");
@@ -44,13 +64,17 @@ public class SimplePathMatcher extends PathMatcher {
 	}
 
 	@Override
-	public String[] matches(String path) {
-		String[] result = null;
+	public String matches(String path) {
+		String result = null;
 		Matcher m = compiledPattern.matcher(path);
 		if (m.matches()) {
-			result = new String[m.groupCount() + 1];
-			for (int i = 0; i <= m.groupCount(); i++) {
-				result[i] = m.group(i);
+			if (m.groupCount() > 0) {
+				result = m.group(1);
+			} else {
+				result = m.group(0);
+			}
+			if (result == null) {
+				result = "";
 			}
 		}
 		return result;

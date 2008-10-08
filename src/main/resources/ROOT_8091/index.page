@@ -4,16 +4,38 @@ Content-Type: text/html
 <html>
   <head>
     <title>WEBSRV Admin Page</title>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	<script>
+      function sure() {
+        return confirm("Are you sure you want to shut down the server?");
+      }
+	</script>
   </head>
   <body>
     <h1>WEBSRV Admin Page</h1>
-    <table>
+
+	<h3 class="header">Server information</h3>
+    <table class="data">
       <tr>
-        <td span="6">Server Name : ${server.name}</td>
+        <td>
+			Server Name
+		</td>
+        <td>
+			${server.name} (<a href="?bean=server&action=shutdown" onClick="return sure()">shut down</a>)
+		</td>
       </tr>
       <tr>
-        <td span="6">Configured listeners</td>
+        <td>
+			Software Version
+		</td>
+        <td>
+			${server.version}
+		</td>
       </tr>
+    </table>
+
+	<h3 class="header">Configured listeners</h3>
+    <table class="data">
       <tr>
         <td>Address</td>
         <td>Port</td>
@@ -31,11 +53,12 @@ Content-Type: text/html
           <td>${listener.requestCount}</td>
           <td>
             ${listener.running}
-            <a href="?action=server.listeners[${listener_INDEX}].start">start</a>
-            <a href="?action=stop">stop</a>
+            <a href="?bean=server&property=listeners[${listener_INDEX}]&action=start">start</a>
+            <a href="?bean=server&property=listeners[${listener_INDEX}]&action=stop">stop</a>
           </td>
         </tr>
       %{listener}
+    </table>
   </body>
 </html>
 

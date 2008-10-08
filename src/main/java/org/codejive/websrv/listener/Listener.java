@@ -195,7 +195,8 @@ public abstract class Listener implements Runnable {
 			}
 			throw ex;
 		} finally {
-            stopped = true;
+			stopped = true;
+			channel.close();
 		}
 	}
 
@@ -206,6 +207,14 @@ public abstract class Listener implements Runnable {
 	public void stop() {
 		stopped = true;
 		acceptSelector.wakeup();
+	}
+
+	/**
+	 * Signal the listener to shut down releasing all resources. The listener
+	 * can NOT be restarted anymore and may not be used afterwards.
+	 */
+	public void shutdown() {
+		stop();
 	}
 
 	/**

@@ -26,29 +26,40 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
+ * This path matcher checks the given path against a configured regular expression
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class RegExpPathMatcher extends PathMatcher {
 
 	private transient Pattern compiledPattern;
 	
+	/**
+	 * Creates a new RegExpPathMatcher
+	 */
 	public RegExpPathMatcher() {
 	}
 
-	public RegExpPathMatcher(String method, String pattern) {
+	/**
+	 * Creates a new RegExpPathMatcher
+	 * @param pattern the regular expression to use for matching paths
+	 */
+	public RegExpPathMatcher(String pattern) {
 		super(pattern);
 		compiledPattern = Pattern.compile(pattern);
 	}
 
 	@Override
-	public String[] matches(String path) {
-		String[] result = null;
+	public String matches(String path) {
+		String result = null;
 		Matcher m = compiledPattern.matcher(path);
 		if (m.matches()) {
-			result = new String[m.groupCount() + 1];
-			for (int i = 0; i <= m.groupCount(); i++) {
-				result[i] = m.group(i);
+			if (m.groupCount() > 0) {
+				result = m.group(1);
+			} else {
+				result = m.group(0);
+			}
+			if (result == null) {
+				result = "";
 			}
 		}
 		return result;

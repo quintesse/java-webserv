@@ -34,29 +34,60 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Logger;
+import org.codejive.websrv.VersionInfo;
 
 /**
- *
+ * This is the default implementation of HttpResponse
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class HttpResponseImpl implements HttpResponse {
 
+	/**
+	 * The original stream that this class will use to write data to the client
+	 */
 	private OutputStream outputStream;
+	/**
+	 * The stream wrapper that users of this object can use to write data to
+	 */
 	private BufferedOutputStream bufferedOutput;
+	/**
+	 * The print writer (wrapper) that users of this object can use to write data to
+	 */
 	private PrintWriter writer;
+	/**
+	 * The response code that will be sent to the client
+	 */
 	private HttpResponseCode responseCode;
+	/**
+	 * A map of all the available response headers
+	 */
 	private HashMap<String, String> headers;
+	/**
+	 * The size in bytes of the internal buffer
+	 */
 	private int bufferSize;
 	
+	/**
+	 * Carriage return & line feed
+	 */
 	private static final String CRLF = "\r\n";
 	
 	/**
 	 * The name and version of this application
 	 */
-	private static final String SERVER_NAME = "websrv/0.1";
+	private static final String SERVER_NAME = "websrv/" + VersionInfo.VERSION;
+	// TODO: ^^^ this is not something that should be here ^^^
 	
+	/**
+	 * Class private logger
+	 */
 	private static final Logger logger = Logger.getLogger(HttpResponseImpl.class.getName());
 	
+	/**
+	 * Creates a new instance using the given output stream to write
+	 * data to the client
+	 * @param outputStream The output stream for writing data to the client
+	 */
 	public HttpResponseImpl(OutputStream outputStream) {
 		this.outputStream = outputStream;
 		responseCode = HttpResponseCode.CODE_OK;
@@ -72,7 +103,6 @@ public class HttpResponseImpl implements HttpResponse {
 	public void setResponseCode(HttpResponseCode responseCode) {
 		checkCommitted("Can't change response code");
 		this.responseCode = responseCode;
-		writeResultAndHeaders();
 	}
 
 	public String getContentType() {
@@ -105,12 +135,10 @@ public class HttpResponseImpl implements HttpResponse {
 
 	public void setHeader(String key, String value) {
 		headers.put(key.toLowerCase(), value);
-		writeResultAndHeaders();
 	}
 
-	public void removeHeader(String key, String value) {
+	public void removeHeader(String key) {
 		headers.remove(key.toLowerCase());
-		writeResultAndHeaders();
 	}
 
 	public Set<String> getHeaderNames() {
@@ -148,6 +176,10 @@ public class HttpResponseImpl implements HttpResponse {
 		}
 	}
 
+	/**
+	 * Initialize the output stream and stream writer and the underlying
+	 * buffered output stream
+	 */
 	private synchronized void initOuput() {
         if (bufferedOutput == null) {
             bufferedOutput = new BufferedOutputStream(outputStream, bufferSize);
@@ -156,26 +188,50 @@ public class HttpResponseImpl implements HttpResponse {
 			} catch (UnsupportedEncodingException ex) {
                 writer = new PrintWriter(new OutputStreamWriter(bufferedOutput));
 			}
-			writeResultAndHeaders();
 		}
 	}
 
+	/**
+	 * Check if data has already been written to the client, if not just
+	 * return without doing anything but throw an exception otherwise
+	 * @param message The message to use for the exception if necessary
+	 */
 	private void checkCommitted(String message) {
 		if (isCommitted()) {
 			throw new IllegalStateException(message + ": output has already been written");
 		}
 	}
 	
+	/**
+	 * This class holds the two most important bits of information about an
+	 * ouput stream: the mime type and character encoding of its content
+	 */
 	private class ContentType {
+		/**
+		 * Mime type of the content
+		 */
 		public String contentType;
+		/**
+		 * Character encoding of the content
+		 */
 		public String characterEncoding;
 
+		/**
+		 * Creates a new instance using the given mime type and encoding
+		 * @param contentType The content mime type
+		 * @param characterEncoding The content character encoding
+		 */
 		public ContentType(String contentType, String characterEncoding) {
 			this.contentType = contentType;
 			this.characterEncoding = characterEncoding;
 		}
 	}
 	
+	/**
+	 * Determine the content type and character encoding using the information
+	 * encountered in the response header "Content-Type"
+	 * @return A ContentType object
+	 */
 	private ContentType getContentTypeAndEncoding() {
 		String[] result = new String[2];
         result[0] = "";
@@ -197,6 +253,11 @@ public class HttpResponseImpl implements HttpResponse {
 		return new ContentType(result[0], result[1]);
 	}
 
+	/**
+	 * Update the value of the response header "Content-Type" using the
+	 * information in the given ContentType object
+	 * @param contentType A ContentType object
+	 */
 	private void updateContentType(ContentType contentType) {
 		String typeAndEncoding = contentType.contentType;
 		if (contentType.characterEncoding.length() > 0) {
@@ -205,22 +266,12 @@ public class HttpResponseImpl implements HttpResponse {
 		setHeader("Content-Type", typeAndEncoding);
 	}
 	
-	private synchronized void writeResultAndHeaders() {
-		if (writer != null) {
-			bufferedOutput.reset();
-			bufferedOutput.setPreventFlush(true);
-            writer.print("HTTP/1.1 " + responseCode.getCode() + " " + responseCode.getMessage() + CRLF);
-            writer.print("Date: " + dateString(new Date()) + CRLF);
-    		writer.print("Server: " + SERVER_NAME);
-			for (String name : getHeaderNames()) {
-                writer.print(name + ": " + getHeader(name) + CRLF);
-			}
-            writer.print(CRLF);
-			writer.flush();
-			bufferedOutput.setPreventFlush(false);
-		}
-	}
-	
+	/**
+	 * Returns the given date as a string using the official format defined
+	 * by the HTTP specification
+	 * @param date A date object
+	 * @return A date string using the oficial HTTP format
+	 */
 	private String dateString(Date date) {
 		SimpleDateFormat fmt = (SimpleDateFormat) SimpleDateFormat.getDateTimeInstance();
 		fmt.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -260,24 +311,109 @@ public class HttpResponseImpl implements HttpResponse {
 		throw new PrematureEOFException();
 	}
 	
+	public void sendRedirect(String url) throws IOException {
+		HttpResponseCode resultCode = HttpResponseCode.CODE_TEMPORARY_REDIRECT;
+		logger.info("SENDING REDIRECT #" + resultCode + " : " + url);
+		try {
+    		reset();
+			setResponseCode(resultCode);
+			setCharacterEncoding("UTF-8");
+		} catch (IllegalStateException ex) {
+			// If we can't empty the buffer we'll just append it
+		}
+		
+		setHeader("Location", url);
+		
+		PrintWriter out = getWriter();
+		out.print(CRLF);
+		out.flush();
+
+		// Ugly way to interrupt to normal program flow but it works
+		throw new PrematureEOFException();
+	}
+	
+	/**
+	 * Write all the necessary response codes and headers to the given output
+	 * stream. This method is used by our BufferedOutputStream to insert this
+	 * information into the stream just ahead of the actual data.
+	 */
+	private synchronized void writeResultAndHeaders(OutputStream out) {
+		PrintWriter w;
+		try {
+			w = new PrintWriter(new OutputStreamWriter(out, getCharacterEncoding()));
+		} catch (UnsupportedEncodingException ex) {
+			w = new PrintWriter(new OutputStreamWriter(out));
+		}
+		w.print("HTTP/1.1 " + responseCode.getCode() + " " + responseCode.getMessage() + CRLF);
+		w.print("Date: " + dateString(new Date()) + CRLF);
+		w.print("Server: " + SERVER_NAME + CRLF);
+		for (String name : getHeaderNames()) {
+			w.print(name + ": " + getHeader(name) + CRLF);
+		}
+		w.print(CRLF);
+		w.flush();
+	}
+	
+	/**
+	 * This class is very much like the official Java BufferedOutputStream
+	 * except for the fact that we allow the internal buffer to be reset
+	 * which in effect clears its contents and allows us to start over.
+	 * This is only allowed when no output has been written yet to the
+	 * wrapped output stream.
+	 */
 	private class BufferedOutputStream extends FilterOutputStream {
 
+		/**
+		 * Our internal buffer
+		 */
 		protected byte[] buf;
+		/**
+		 * The number of bytes of data currently in the buffer
+		 */
 		protected int count;
+		/**
+		 * The number of bytes of data actually written to the client
+		 */
 		protected long countWritten;
-        protected boolean preventFlush;
 		
+		private boolean chunked;
+		
+		/**
+		 * Creates a new instance using the given output stream and buffer size
+		 * @param out The buffer stream to be wrapped
+		 * @param size The size in bytes of our internal buffer
+		 */
 		public BufferedOutputStream(OutputStream out, int size) {
 			super(out);
 			if (size <= 0) {
 				throw new IllegalArgumentException("Buffer size <= 0");
 			}
 			buf = new byte[size];
-			preventFlush = false;
+			chunked = false;
 		}
 
+		/**
+		 * Perform a flsuh of our internal buffer writing its data to the
+		 * output stream that we wrap
+		 * @throws java.io.IOException Is thrown when the data could not be written
+		 */
 		private void flushBuffer() throws IOException {
 			if (count > 0) {
+				//String chrs = new String(buf, "iso8859-1");
+				//System.out.println("Writing #" + count + " bytes");
+				//for (int i = 0; i < count; i++) {
+				//	System.out.print(chrs.charAt(i));
+				//}
+				//System.out.println("--DONE--");
+				if (countWritten == 0) {
+					// The very first time
+					writeResultAndHeaders(out);
+					// Shall we use chunks?
+					chunked = "chunked".equalsIgnoreCase(getHeader("Transfer-Encoding"));
+				}
+				if (chunked) {
+					writeChunkSize(count);
+				}
 				out.write(buf, 0, count);
 				countWritten += count;
 				count = 0;
@@ -310,31 +446,48 @@ public class HttpResponseImpl implements HttpResponse {
 			count += len;
 		}
 		
-		public boolean getPreventFlush() {
-			return preventFlush;
-		}
-
-		public synchronized void setPreventFlush(boolean prevent) {
-			preventFlush = prevent;
+		@Override
+		public synchronized void flush() throws IOException {
+			flushBuffer();
+			out.flush();
 		}
 
 		@Override
-		public synchronized void flush() throws IOException {
-			if (!preventFlush) {
-                flushBuffer();
-                out.flush();
+		public void close() throws IOException {
+			if (chunked) {
+				// Write final empty chunk
+				//writeChunkSize(0);
+				// Write the final CRLF to terminate the trailer
+				String finale = CRLF + "0" + CRLF + CRLF;
+				byte[] crlfBuf = finale.getBytes("UTF-8");
+				out.write(crlfBuf, 0, crlfBuf.length);
 			}
+			// We don't call super.close() here because that would close the socket!!!
 		}
 
+		/**
+		 * Returns the total number of bytes of data already written to the client
+		 * @return The number of bytes written
+		 */
 		public synchronized long countBytesWritten() {
 			return countWritten;
 		}
 		
+		/**
+		 * Resets the internal counter that holds the number of bytes in the
+		 * buffer to 0. This only works of no bytes were written yet to the client
+		 */
 		public synchronized void reset() {
 			if (countWritten > 0) {
 				throw new IllegalStateException("Output has already been written");
 			}
             count = 0;
+		}
+		
+		private void writeChunkSize(int size) throws IOException {
+			String hexSize = Integer.toHexString(size) + CRLF;
+			byte[] hexBuf = hexSize.getBytes("UTF-8");
+			out.write(hexBuf, 0, hexBuf.length);
 		}
 	}
 }

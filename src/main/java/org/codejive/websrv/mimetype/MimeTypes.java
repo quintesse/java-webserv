@@ -57,16 +57,30 @@ public class MimeTypes {
 	/**
 	 * Finds a mime-type by comparing the file extensions to the given path
 	 * @param path A path or url pointing to a file
-	 * @return The name of the mime-type or null if no match was found
+	 * @return The mime-type or null if no match was found
 	 */
-	public String findByPath(String path) {
+	public MimeType findByPath(String path) {
 		FileExtensionPathMatcher matcher = new FileExtensionPathMatcher();
 		for (MimeType def : mimeTypes) {
-			matcher.setFileExtension(def.getFileExtensions());
+			matcher.setFileExtensions(def.getFileExtensions());
             if (matcher.matches(path) != null) {
-				return def.getMimeType();
+				return def;
 			}
 		}
 		return null;
 	}
+
+	/**
+	 * Finds a mime-type by comparing the name of the mime-type
+	 * @param name A mime-type name (eg "text/plain")
+	 * @return The mime-type or null if no match was found
+	 */
+    public MimeType findByName(String name) {
+		for (MimeType def : mimeTypes) {
+            if (def.getMimeType().equalsIgnoreCase(name)) {
+				return def;
+			}
+		}
+		return null;
+    }
 }

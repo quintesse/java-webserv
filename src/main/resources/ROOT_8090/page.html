@@ -1,0 +1,132 @@
+<html>
+  <head>
+    <title>HOWTO Write Page Files</title>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+  </head>
+  <body>
+    <h1>HOWTO Write Page Files</h1>
+	<h3 class="header">Introduction</h3>
+	Page files are HTML or other text documents that allow for the insertion of
+	simple dynamic content and the execution of server-side code triggered by the
+	user interacting with the page.
+ 
+	<h3 class="header">Basic format</h3>
+	In most cases a page file is basically an HTML document with a special header:
+	the first line of the file <b>must</b> contain a number which represents the
+	<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">HTTP Response Code</a> 
+	the server will return for the page. For most pages this will be the number
+	200 (use this number if you don't exactly understand what this is for).
+	The lines following this number can contain
+	<a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">HTTP header fields</a>,
+	one on each	line. A HTTP header field consists of a name and a value separated
+	by a colon (:). In most cases you will need to specify at least one header
+	field: <b>Content-Type</b>. In case of an HTML file you would specify the
+	value <b>text/html</b> (when you leave out this value the server will assume
+	that the rest of the page file is of type <b>text/plain</b>). After the last
+	header field line you <b>must</b> leave an empty line and after that you can
+	put the actual content of the page. An example page file could look like this:
+	<pre class="codeblock">
+200
+Content-Type : text/html
+
+&lt;html&gt;
+	&lt;head&gt;
+		&lt;title&gt;Test Page&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;h1&gt;Hello World&lt;/h1&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+	<h3 class="header">Variables</h3>
+	It is possible to access certain Java Beans from within a Script page and
+	retrieve and display certain properties. These Java Beans will be registered
+	by name with the server and can be accessed in the following ways from within
+	the page file:
+	<pre class="codeblock">
+${beanname}
+  
+${beanname.propertyname}
+  
+${beanname.or.even.nested.properties}</pre>
+	The first version can be used for those Java Beans that can be directly
+	displayed in the page (because they have a toString() method that returns
+	usefull information). The second and third versions show how to retrieve the
+	value of a certain child property.
+	<p>
+	At this particular moment only one of these variables is defined:
+	<b>server</b>, which allows direct access to the
+	<a href="/javadoc/org/codejive/websrv/Server.html">Server</a> object.
+	To retrieve the name of the Server object, for example, you would use the following:
+	<pre class="codeblock">
+${server.name}</pre>
+	and an example Page file could look like this:
+	<pre class="codeblock">
+200
+Content-Type : text/html
+
+&lt;html&gt;
+	&lt;head&gt;
+		&lt;title&gt;Test Page&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		&lt;h1&gt;The server name is "<font color="blue">${server.name}</font>"&lt;/h1&gt;
+	&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+	<h3 class="header">Loops</h3>
+	The other important feature of Page files are loops. Loops can be used to
+	repeat certain parts of the page content depending on the values offered
+	by a certain Java Bean or one of its properties. This basically works in a
+	similar way as the variables described above except for the fact that the
+	Java Bean or the selected property should be an array, an Iterator or an
+	object that implements Iterable. A loop looks like this:
+	<pre class="codeblock">
+%{loopname=beanname}
+	...
+%{loopname}
+
+%{loopname=beanname.propertyname}
+	...
+%{loopname}
+
+%{loopname=beanname.nested.property}
+	...
+%{loopname}</pre>
+	From within the loop the currently selected item will be available as the
+	variable <b><i>loopname</i></b> and a special variable will be available with the
+	current index number (counting from 0 to the number of elements in the loop
+	- 1) called <b><i>loopname</i>_INDEX</b>. A Page file showing a numbered list
+	with the address for each listener of this webserver would look like this:
+	<pre class="codeblock">
+200
+Content-Type : text/html
+
+&lt;html&gt;
+	&lt;head&gt;
+		&lt;title&gt;Test Page&lt;/title&gt;
+	&lt;/head&gt;
+	&lt;body&gt;
+		<font color="blue">%{listener=server.listeners}</font>
+			&lt;li&gt;<font color="blue">${listener_INDEX}</font> - <font color="blue">${listener.address}</font>
+		<font color="blue">%{listener}</font>
+	&lt;/body&gt;
+&lt;/html&gt;</pre>
+ 
+	<h3 class="header">Actions</h3>
+	And finally there are actions which enable the user to effect changes in the
+	server by calling a Java Bean's method. At the moment only methods that have
+	no parameters can be executed. The way to do this is pretty simple, all
+	requests for a Page file received by the server are checked for the existence
+	of three parameters: <b>bean</b>, <b>property</b> and <b>action</b>. Only
+	<b>bean</b> and <b>action</b> need to exist, <b>property</b> is optional.
+	So the following request could be used to shut down a web server:
+ 	<pre class="codeblock">
+http://some.host/some.page?bean=server&amp;action=shutdown</pre>
+	A slightly more complex for allows for the use of "array indices" where you
+	can select a certain item from an array or list. The following request will
+	stop a web server's first listener:
+ 	<pre class="codeblock">
+http://some.host/some.page?bean=server&amp;property=listeners[0]&amp;action=shutdown</pre>
+  </body>
+</html>

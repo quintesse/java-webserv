@@ -23,27 +23,51 @@
 package org.codejive.websrv.util;
 
 /**
- *
+ * A path matcher compares a given path against a predefined pattern or condition
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public abstract class PathMatcher {
     
 	private String pattern;
 
+	/**
+	 * Creates a new PathMatcher
+	 */
 	public PathMatcher() {
 	}
 
+	/**
+	 * Creates a new PathMatcher
+	 * @param pattern The pattern to use for path matching
+	 */
 	public PathMatcher(String pattern) {
 		this.pattern = pattern;
 	}
 
+	/**
+	 * Returns the currently configured pattern
+	 * @return the current pattern
+	 */
 	public String getPattern() {
 		return pattern;
 	}
 
+	/**
+	 * Sets a new pattern to use to match paths
+	 * @param pattern The new pattern to use for path matching
+	 */
 	public void setPattern(String pattern) {
 		this.pattern = pattern;
 	}
 
-	public abstract String[] matches(String path);
+	/**
+	 * Matches a path using the conditions defined by the class' implementation
+	 * returning either <code>null</code> if no match could be made or a resulting
+	 * path if the match was succesful. The resulting path is often the same as
+	 * the path passed as an argument to the method but this is by no means a
+	 * requirement.
+	 * @param path The path to match
+	 * @return the resulting path or <code>null</code> if no match could be made
+	 */
+	public abstract String matches(String path);
 }

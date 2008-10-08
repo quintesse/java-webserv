@@ -27,31 +27,44 @@ import org.codejive.websrv.mimetype.MimeType;
 import org.codejive.websrv.config.HttpListenerConfig;
 import org.codejive.websrv.config.ServerConfig;
 import org.codejive.websrv.config.WelcomeFiles;
+import org.codejive.websrv.mimetype.DefaultMimeTypeHandler;
+import org.codejive.websrv.mimetype.MimeTypeHandler;
 import org.codejive.websrv.util.SimplePathMatcher;
 import org.codejive.websrv.servlet.RequestMatcherServlet;
 import org.codejive.websrv.servlet.FileServlet;
-import org.codejive.websrv.servlet.PageServlet;
 import org.codejive.websrv.mimetype.MimeTypes;
+import org.codejive.websrv.mimetype.PageMimeTypeHandler;
 import org.codejive.websrv.servlet.RequestMatch;
 
 /**
- *
+ * This main class is only used for demonstration purposes.
+ * It will start two HTTP listeners on ports 8090 and 8091
+ * and will try to open a browser pointing to the 8090 site.
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class Main {
 
-	// Entry point.
+	/**
+	 * Main entry point for the application
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		try {
 			System.out.println("Starting...");
 
 			ServerConfig serverConfig = new ServerConfig();
 			
+			MimeTypeHandler defaultHandler = new DefaultMimeTypeHandler();
+			PageMimeTypeHandler pageHandler = new PageMimeTypeHandler();
+			
 			MimeTypes mimeTypes = new MimeTypes();
-			mimeTypes.getMimeTypes().add(new MimeType("text/html", "html", "htm"));
-			mimeTypes.getMimeTypes().add(new MimeType("image/gif", "gif"));
-			mimeTypes.getMimeTypes().add(new MimeType("image/jpg", "jpg"));
-			mimeTypes.getMimeTypes().add(new MimeType("image/png", "png"));
+			mimeTypes.getMimeTypes().add(new MimeType("text/plain", defaultHandler, "txt"));
+			mimeTypes.getMimeTypes().add(new MimeType("text/html", defaultHandler, "html", "htm"));
+			mimeTypes.getMimeTypes().add(new MimeType("text/xml", defaultHandler, "xml"));
+			mimeTypes.getMimeTypes().add(new MimeType("image/gif", defaultHandler, "gif"));
+			mimeTypes.getMimeTypes().add(new MimeType("image/jpg", defaultHandler, "jpg"));
+			mimeTypes.getMimeTypes().add(new MimeType("image/png", defaultHandler, "png"));
+			mimeTypes.getMimeTypes().add(new MimeType("x-application/x-websrv-page", pageHandler, "page"));
 			serverConfig.setMimeTypes(mimeTypes);
 			
 			WelcomeFiles welcomeFiles = new WelcomeFiles();
@@ -60,25 +73,19 @@ public class Main {
 			welcomeFiles.getFileNames().add("index.htm");
 			serverConfig.setWelcomeFiles(welcomeFiles);
 			
-			PageServlet pageHandler1, pageHandler2;
-			
 			{
                 HttpListenerConfig listenerConfig = new HttpListenerConfig(8090);
 
-                RequestMatcherServlet handler = new RequestMatcherServlet();
-                listenerConfig.setDefaultServlet(handler);
+                RequestMatcherServlet mainServlet = new RequestMatcherServlet();
+                listenerConfig.setDefaultServlet(mainServlet);
 
-                FileServlet docHandler = new FileServlet("dist/javadoc", mimeTypes, welcomeFiles);
-                RequestMatch docMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("/docs(/**)"), docHandler);
-                handler.getRequestMatchers().add(docMatcher);
+                FileServlet docServlet = new FileServlet("dist/javadoc", mimeTypes, welcomeFiles);
+                RequestMatch docMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("/javadoc(/**)?"), docServlet);
+                mainServlet.getRequestMatchers().add(docMatcher);
 
-                pageHandler1 = new PageServlet("ROOT_8090", welcomeFiles);
-                RequestMatch pageMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**/*.page"), pageHandler1);
-                handler.getRequestMatchers().add(pageMatcher);
-
-                FileServlet defaultHandler = new FileServlet("ROOT_8090", mimeTypes, welcomeFiles);
-                RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultHandler);
-                handler.getRequestMatchers().add(defaultMatcher);
+                FileServlet defaultServlet = new FileServlet("ROOT_8090", mimeTypes, welcomeFiles);
+                RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultServlet);
+                mainServlet.getRequestMatchers().add(defaultMatcher);
 
                 serverConfig.getListeners().add(listenerConfig);
 			}
@@ -86,20 +93,12 @@ public class Main {
 			{
                 HttpListenerConfig listenerConfig = new HttpListenerConfig(8091);
 
-                RequestMatcherServlet handler = new RequestMatcherServlet();
-                listenerConfig.setDefaultServlet(handler);
+                RequestMatcherServlet mainServlet = new RequestMatcherServlet();
+                listenerConfig.setDefaultServlet(mainServlet);
 
-                FileServlet docHandler = new FileServlet("dist/javadoc", mimeTypes, welcomeFiles);
-                RequestMatch docMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("/docs(/**)"), docHandler);
-                handler.getRequestMatchers().add(docMatcher);
-
-                pageHandler2 = new PageServlet("ROOT_8091", welcomeFiles);
-                RequestMatch pageMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**/*.page"), pageHandler2);
-                handler.getRequestMatchers().add(pageMatcher);
-
-                FileServlet defaultHandler = new FileServlet("ROOT_8091", mimeTypes, welcomeFiles);
-                RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultHandler);
-                handler.getRequestMatchers().add(defaultMatcher);
+                FileServlet defaultServlet = new FileServlet("ROOT_8091", mimeTypes, welcomeFiles);
+                RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultServlet);
+                mainServlet.getRequestMatchers().add(defaultMatcher);
 
                 serverConfig.getListeners().add(listenerConfig);
 			}
@@ -107,13 +106,12 @@ public class Main {
 			Server server = serverConfig.buildServer();
 			
 			// Bit of a hack this
-            pageHandler1.getVariables().put("server", server);
-            pageHandler2.getVariables().put("server", server);
+            pageHandler.getVariables().put("server", server);
 
 			server.startAll();
 			
 			// Would be nice to be able to open a browser here
-			showDocument("http://localhost:8090");
+			showDocument("http://localhost:8090/index.html");
 
 			server.waitAll();
 		} catch (Exception e) {
@@ -125,7 +123,7 @@ public class Main {
 		boolean dummy = tryBrowser("firefox", url)
                      || tryBrowser("mozilla", url)
                      || tryBrowser("konqueror", url)
-                     || tryBrowser("iexplore", url);
+                     || tryBrowser("explorer", url);
 	}
 	
 	private static boolean tryBrowser(String cmd, String url) {

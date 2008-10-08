@@ -25,24 +25,29 @@ package org.codejive.websrv.protocol.http;
 import java.io.IOException;
 
 /**
- *
+ * This exception, although in this case exception is not really the
+ * proper word, will be thrown when the generation of the server response
+ * has to be aborted prematurely. The reason that this is not really an
+ * exception is that it will always be silently ignored as if nothing
+ * happened. Is is used as a way to easily "exit" from deep-lying pieces
+ * of code directly to outermost server component that handles response
+ * generation. This component will treat this exception as a sign that the
+ * output has been generated correctly.
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class PrematureEOFException extends IOException {
 
+	/**
+	 * Creates a new instance
+	 */
 	public PrematureEOFException() {
 	}
 
+	/**
+	 * Creates a new instance using the given message
+	 * @param message The exception message
+	 */
 	public PrematureEOFException(String message) {
 		super(message);
 	}
-
-	public PrematureEOFException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public PrematureEOFException(Throwable cause) {
-		super(cause);
-	}
-
 }

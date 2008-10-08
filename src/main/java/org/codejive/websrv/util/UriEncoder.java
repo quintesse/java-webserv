@@ -37,7 +37,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
-import java.text.Normalizer;
 import sun.nio.cs.ThreadLocalCoders;
 
 /**
@@ -72,9 +71,12 @@ public class UriEncoder {
 		}
 	}
 
-	// Encodes all characters >= \u0080 into escaped, normalized UTF-8 octets,
-	// assuming that s is otherwise legal
-	//
+	/**
+	 * Encodes all characters >= \u0080 into escaped, normalized UTF-8 octets,
+	 * assuming that s is otherwise legal
+	 * @param s String to encode
+	 * @return Encoded string
+	 */
 	public static String encode(String s) {
 		int n = s.length();
 		if (n == 0) {
@@ -90,7 +92,7 @@ public class UriEncoder {
 			}
 		}
 
-		String ns = Normalizer.normalize(s, Normalizer.Form.NFC);
+		String ns = s;
 		ByteBuffer bb = null;
 		try {
 			bb = ThreadLocalCoders.encoderFor("UTF-8").encode(CharBuffer.wrap(ns));
@@ -129,13 +131,16 @@ public class UriEncoder {
 		      | ((decode(c2) & 0xf) << 0));
 	}
 
-	// Evaluates all escapes in s, applying UTF-8 decoding if needed.  Assumes
-	// that escapes are well-formed syntactically, i.e., of the form %XX.  If a
-	// sequence of escaped octets is not valid UTF-8 then the erroneous octets
-	// are replaced with '\uFFFD'.
-	// Exception: any "%" found between "[]" is left alone. It is an IPv6 literal
-	//            with a scope_id
-	//
+	/**
+	 * Evaluates all escapes in s, applying UTF-8 decoding if needed.  Assumes
+	 * that escapes are well-formed syntactically, i.e., of the form %XX.  If a
+	 * sequence of escaped octets is not valid UTF-8 then the erroneous octets
+	 * are replaced with '\uFFFD'.
+	 * Exception: any "%" found between "[]" is left alone. It is an IPv6 literal
+	 *            with a scope_id
+	 * @param s Encoded string
+	 * @return Decoded string
+	 */
 	public static String decode(String s) {
 		if (s == null) {
 			return s;

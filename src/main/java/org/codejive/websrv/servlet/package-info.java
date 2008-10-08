@@ -1,7 +1,7 @@
 /*
  * package-info.java
  * 
- * Created on Aug 29, 2007, 3:07:42 PM
+ * Created on Aug 29, 2007, 3:25:22 PM
  * Copyright Tako Schotanus
  *
  * This file is part of websrv.
@@ -21,10 +21,11 @@
  */
 
 /**
- * This package holds the classes that maintain information about the relationship
- * between mime-type names and file extensions as well as the handlers that know
- * how to present their particular mime-type(s) to the client.
+ * This package holds the Servlet interface that is implemented by classes that
+ * want to handle client requests and generate the corresponding responses. And
+ * it also holds several implementations needed for the web server's basic
+ * functionality
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
-package org.codejive.websrv.mimetype;
+package org.codejive.websrv.servlet;
 

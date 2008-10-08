@@ -24,10 +24,12 @@ package org.codejive.websrv.mimetype;
 
 /**
  * This class holds the information for one particular mime-type mapping.
- * Which is a list of file extensions and the mime-type that they relate to.
+ * Which is a list of file extensions and the mime-type name and handler that
+ * they relate to.
  * An example:
  * <pre>
- * MimeType mt = new MimeType("text/html", ".html", ".htm");
+ * MimeTypeHandler handler = new DefaultMimeTypeHandler();
+ * MimeType mt = new MimeType("text/html", handler, ".html", ".htm");
  * </pre>
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
@@ -44,6 +46,11 @@ public class MimeType {
 	private String[] fileExtensions;
 
 	/**
+	 * A handler that knows how browser content for this mime-type
+	 */
+	private MimeTypeHandler handler;
+	
+	/**
 	 * Creates a new "empty" mime type
 	 */
 	public MimeType() {
@@ -52,11 +59,13 @@ public class MimeType {
 	/**
 	 * Creates a new mime-type using the given name and extensions
 	 * @param mimeType The name for the new mime-type
+	 * @param handler A content handler for the new mime-type
 	 * @param fileExtensions The file extensions
 	 */
-	public MimeType(String mimeType, String... fileExtensions) {
-		this.fileExtensions = fileExtensions;
+	public MimeType(String mimeType, MimeTypeHandler handler, String... fileExtensions) {
 		this.mimeType = mimeType;
+		this.handler = handler;
+		this.fileExtensions = fileExtensions;
 	}
 
 	/**
@@ -90,4 +99,20 @@ public class MimeType {
 	public void setMimeType(String mimeType) {
 		this.mimeType = mimeType;
 	}
+
+	/**
+	 * Returns the content handler of the mime-type
+	 * @return A content handler
+	 */
+	public MimeTypeHandler getHandler() {
+        return handler;
+    }
+
+	/**
+	 * Sets the content handler of the mime-type
+	 * @param handler A content handler
+	 */
+	public void setHandler(MimeTypeHandler handler) {
+        this.handler = handler;
+    }
 }

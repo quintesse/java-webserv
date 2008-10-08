@@ -27,10 +27,18 @@ import org.codejive.websrv.protocol.http.HttpRequest;
 import org.codejive.websrv.protocol.http.HttpResponse;
 
 /**
- *
+ * Classes that implement this interface are used for generating a response for
+ * a client request
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public interface Servlet {
 	
-    void process(String requestPath, HttpRequest request, HttpResponse response) throws IOException;
+	/**
+	 * Processes a client request and generates a response
+	 * @param requestPath The path part of the originating request
+	 * @param request The originating HTTP request
+	 * @param response The HTTP response to send the result to
+	 * @throws java.io.IOException will be thrown when data cannot be sent to the client
+	 */
+	void process(String requestPath, HttpRequest request, HttpResponse response) throws IOException;
 }

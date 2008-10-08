@@ -62,6 +62,14 @@ public class Server {
 	}
 
 	/**
+	 * Returns the version number of this web server's software
+	 * @return Version of this server
+	 */
+	public String getVersion() {
+        return VersionInfo.VERSION;
+	}
+
+	/**
 	 * Returns the name of the local machine (which often is just
 	 * "localhost" or "127.0.0.1")
 	 * @return Name of the local machine
@@ -116,10 +124,11 @@ public class Server {
 	 */
 	public void waitAll() {
 		try {
-			executorPool.awaitTermination(0, TimeUnit.DAYS);
+			executorPool.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 		} catch (InterruptedException ex) {
-			logger.info("Main server thread interrupted, shutting down...");
+			logger.info("Main server thread interrupted");
 		}
+		logger.info("Server shutting down...");
 	}
 	
 	/**
@@ -129,5 +138,15 @@ public class Server {
 		for (Listener listener : listeners) {
             listener.stop();
 		}
+	}
+	
+	/**
+	 * Shuts down the server
+	 */
+	public void shutdown() {
+		for (Listener listener : listeners) {
+            listener.shutdown();
+		}
+		executorPool.shutdownNow();
 	}
 }

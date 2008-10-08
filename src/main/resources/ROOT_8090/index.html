@@ -1,14 +1,29 @@
 <html>
   <head>
     <title>Welcome to WEBSRV</title>
+	<link rel="stylesheet" type="text/css" href="styles.css">
+	<script>
+      function sure() {
+        return confirm("Are you sure you want to shut down the server?");
+      }
+	</script>
   </head>
   <body>
     <h1>Welcome to WEBSRV</h1>
-	<h2>Some features it supports</h2>
+	<h3 class="header">Administration</h3>
+	<li><a href="http://localhost:8091/index.page">Server Administration &amp; Monitoring</a></li>
+	<li><a href="http://localhost:8091/index.page?bean=server&action=shutdown" onClick="return sure()">Server Shutdown</a></li>
+	<h3 class="header">Documentation &amp; Sources</h3>
+	<li><a href="javadoc/index.html">Java Doc</a></li>
+	<li><a href="page.html">HOWTO Write page files</a></li>
+	<li><a href="http://hg.codejive.org/web/websrv">Online Mercurial repository</a></li>
+	<li><a href="changelog.html">Changelog</a></li>
+	<li><a href="developers.html">Developers</a></li>
+	<h3 class="header">Some features it supports</h3>
+	<li><a href="page.html">Dynamic page content</a></li>
 	<li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html">Keep-Alive</a></li>
-	<li>Dynamic page content</li>
-	<h2>Some important features missing</h2>
-	<li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.5">POST requests</a></li>
 	<li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html#sec3.6.1">Chunked transfers</a></li>
+	<h3 class="header">Some important features missing</h3>
+	<li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.5">POST requests</a></li>
    </body>
 </html>

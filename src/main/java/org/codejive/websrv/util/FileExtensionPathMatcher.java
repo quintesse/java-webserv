@@ -23,33 +23,48 @@
 package org.codejive.websrv.util;
 
 /**
- *
+ * This path matcher only checks if the given path ends in a period followed by
+ * any of the configured file extensions
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class FileExtensionPathMatcher extends PathMatcher {
 
 	private String[] fileExtensions;
 	
+	/**
+	 * Creates a FileExtensionPathMatcher
+	 */
 	public FileExtensionPathMatcher() {
 	}
 
+	/**
+	 * Creates a FileExtensionPathMatcher
+	 * @param fileExtensions A list of file extensions (without any leading dots)
+	 */
 	public FileExtensionPathMatcher(String... fileExtensions) {
 		this.fileExtensions = fileExtensions;
 	}
 
-	public String[] getFileExtension() {
+	/**
+	 * Returns the list of file extensions configured for this matcher
+	 * @return a list of file extensions
+	 */
+	public String[] getFileExtensions() {
 		return fileExtensions;
 	}
 
-	public void setFileExtension(String[] fileExtension) {
+	/**
+	 * Sets the list of file extensions for this matcher
+	 * @param fileExtension a list of file extensions
+	 */
+	public void setFileExtensions(String[] fileExtension) {
 		this.fileExtensions = fileExtension;
 	}
 
-	public String[] matches(String path) {
+	public String matches(String path) {
 		for (String ext : fileExtensions) {
             if (path.endsWith("." + ext)) {
-				String[] result = { path };
-				return result;
+				return path;
 			}
 		}
 		return null;

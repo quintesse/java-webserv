@@ -1,0 +1,33 @@
+/* 
+    Document   : styles
+    Created on : 29-oct-2007, 16:41:25
+    Author     : Tako Schotanus
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+.header { 
+	background-color: #ccccff;
+	font-weight: bold;
+	padding-bottom: 2px;
+	padding-left: 2px;
+}
+
+.data { 
+	background-color: #eeeeee;
+	padding-bottom: 2px;
+	padding-left: 2px;
+	border-right-style: solid;
+	border-left-style: solid;
+	border-bottom-style: solid;
+	border-top-style: solid;
+	border-right-width: 1px;
+	border-left-width: 1px;
+	border-bottom-width: 1px;
+	border-top-width: 1px;
+	border-right-color: #ccccff;
+	border-left-color: #ccccff;
+	border-bottom-color: #ccccff;
+	border-top-color: #ccccff;
+}
+

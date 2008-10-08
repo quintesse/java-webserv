@@ -76,14 +76,28 @@ public enum HttpResponseCode {
 		this.message = message;
 	}
 
+	/**
+	 * Returns the HTTP response code
+	 * @return the HTTP response code
+	 */
 	public int getCode() {
 		return code;
 	}
 
+	/**
+	 * Returns the textual representation of the HTTP response
+	 * @return the textual representation of the HTTP response
+	 */
 	public String getMessage() {
 		return message;
 	}
 	
+	/**
+	 * Returns the <code>HttpResponseCode</code> object with the specified reponse
+	 * code or <code>null</code> if the specified code does not exists
+	 * @param responseCode An HTTP response code
+	 * @return the associated <code>HttpResponseCode</code> object or <code>null</code>
+	 */
 	public static HttpResponseCode getByCode(int responseCode) {
 		for (HttpResponseCode code : values()) {
 			if (code.getCode() == responseCode) {
@@ -93,6 +107,11 @@ public enum HttpResponseCode {
 		return null;
 	}
 	
+	/**
+	 * Returns the textual representation for the specified reponse code
+	 * @param responseCode An HTTP response code
+	 * @return the textual representation for the specified reponse code
+	 */
 	public static String getTextForCode(int responseCode) {
 		for (HttpResponseCode code : values()) {
 			if (code.getCode() == responseCode) {

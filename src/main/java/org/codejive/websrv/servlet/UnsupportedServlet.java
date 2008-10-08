@@ -28,11 +28,16 @@ import org.codejive.websrv.protocol.http.HttpResponse;
 import org.codejive.websrv.protocol.http.HttpResponseCode;
 
 /**
- *
+ * This is a servlet that will simply send a 501 NOT IMPLEMENTED response to the
+ * client. It is used when no other servlet has been found to handle the client
+ * request
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class UnsupportedServlet implements Servlet {
 
+	/**
+	 * Creates a new UnsupportedServlet
+	 */
 	public UnsupportedServlet() {
 	}
 

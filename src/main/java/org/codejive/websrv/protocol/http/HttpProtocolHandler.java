@@ -24,9 +24,9 @@ package org.codejive.websrv.protocol.http;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
@@ -63,6 +63,8 @@ public class HttpProtocolHandler implements ProtocolHandler {
 	 * closing the connection. -1 means unlimited (default = -1)
 	 */
 	private int keepAliveMaxRequests;
+	
+	private static final String CRLF = "\r\n";
 	
 	/**
 	 * Class private logger
@@ -136,9 +138,21 @@ public class HttpProtocolHandler implements ProtocolHandler {
                 HttpResponseImpl response = new HttpResponseImpl(socket.getOutputStream());
                 try {
 					socket.setSoTimeout(keepAliveTimeout);
-                    HttpRequest request = parseRequest(socket.getInputStream());
+
+					LineNumberReader in = new LineNumberReader(new InputStreamReader(socket.getInputStream()));
+
+					HttpRequestImpl request = parseRequest(in);
 					
-					keepAlive = "HTTP/1.1".equalsIgnoreCase(request.getRequestProtocol())
+					boolean useHttp11 = "HTTP/1.1".equalsIgnoreCase(request.getRequestProtocol());
+					if (useHttp11 && "100-continue".equalsIgnoreCase(request.getHeader("Expect"))) {
+						// Generate the CONTINUE response before going on to generate
+						// the actual response
+						generateContinue(request, new HttpResponseImpl(socket.getOutputStream()));
+					}
+					
+                    parseRequestHeaders(in, request);
+					
+					keepAlive = useHttp11
 							|| "Keep-Alive".equalsIgnoreCase(request.getHeader("Connection"))
 							|| (maxRequests > 0);
 					if (keepAlive) {
@@ -151,6 +165,11 @@ public class HttpProtocolHandler implements ProtocolHandler {
 						response.setHeader("Connection", "Keep-Alive");
 					} else {
 						response.setHeader("Connection", "close");
+					}
+					
+					// For HTTP/1.1 make sure the Host header is present (as required by the spec)
+					if (useHttp11 && request.getHeader("Host") == null) {
+						generateErrorResponse(HttpResponseCode.CODE_BAD_REQUEST, "No Host: header received", response);
 					}
 					
                     generateResponse(request, response);
@@ -172,7 +191,15 @@ public class HttpProtocolHandler implements ProtocolHandler {
                     generateErrorResponse(HttpResponseCode.CODE_INTERNAL_SERVER_ERROR, ex, response);
                     logger.log(Level.SEVERE, "500 Internal Server Error", ex);
                     keepAlive = false;
-                }
+                } finally {
+					if (response.isCommitted()) {
+						try {
+							response.getOutputStream().close();
+						} catch (IOException ex) {
+		                    logger.log(Level.WARNING, "Could not properly close response output stream", ex);
+						}
+					}
+				}
 
                 // Maybe the response handler set the Connection to "close"?
                 keepAlive = keepAlive && response.getHeader("Connection").equalsIgnoreCase("Keep-Alive");
@@ -192,17 +219,15 @@ public class HttpProtocolHandler implements ProtocolHandler {
 	}
 
 	/**
-	 * Parses the an incoming client request constructing an HttpRequest
+	 * Parses the incoming client request constructing an HttpRequest
 	 * object with the information retrieved from the incoming data stream
 	 * @param inStream The incoming data stream containing the client request
 	 * @return A newly created HttpRequest object
 	 * @throws java.io.IOException Will be trhown if the incoming data could
 	 * not be read or parsed correctly
 	 */
-	private HttpRequest parseRequest(InputStream inStream) throws IOException {
+	private HttpRequestImpl parseRequest(LineNumberReader in) throws IOException {
 		HttpRequestImpl request = new HttpRequestImpl();
-
-		LineNumberReader in = new LineNumberReader(new InputStreamReader(inStream));
 
 		// Read a non-empty line
 		// Skipping empty lines is not according to the spec
@@ -230,12 +255,25 @@ public class HttpProtocolHandler implements ProtocolHandler {
 			throw new MalformedRequestException("Malformed request URI: " + reqParts[1]);
 		}
 
+		return request;
+	}
+
+	/**
+	 * Parses the incoming request headers storing them in the given request object
+	 * @param inStream The incoming data stream containing the client request
+	 * @param request The request object to store the headers in
+	 * @return A newly created HttpRequest object
+	 * @throws java.io.IOException Will be trhown if the incoming data could
+	 * not be read or parsed correctly
+	 */
+	private HttpRequest parseRequestHeaders(LineNumberReader in, HttpRequestImpl request) throws IOException {
+		String requestText;
 		while (((requestText = in.readLine()) != null) && (requestText.length() > 0)) {
 			String[] paramParts = requestText.split(":", 2);
 			if (paramParts.length != 2) {
 				throw new MalformedRequestException("Malformed request header: " + requestText);
 			}
-			request.setHeader(paramParts[0].trim(), paramParts[0].trim());
+			request.setHeader(paramParts[0].trim(), paramParts[1].trim());
 		}
 
 		return request;
@@ -250,6 +288,21 @@ public class HttpProtocolHandler implements ProtocolHandler {
 	private void generateResponse(HttpRequest request, HttpResponse response) throws IOException {
 		response.setResponseCode(HttpResponseCode.CODE_OK);
         responseHandler.handleResponse(request, response);
+	}
+
+	/**
+	 * Generates a "100 CONTINUE" response for the client
+	 * @param request A request object
+	 * @param response A response object
+	 * @throws java.io.IOException Will be thrown when the response could not be generated
+	 */
+	private void generateContinue(HttpRequest request, HttpResponse response) throws IOException {
+		response.setResponseCode(HttpResponseCode.CODE_CONTINUE);
+    	response.setContentType("text/plain");
+		response.setCharacterEncoding("UTF-8");
+		PrintWriter out = response.getWriter();
+		out.print(CRLF);
+		out.flush();
 	}
 
 	/**

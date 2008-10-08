@@ -28,17 +28,30 @@ import org.codejive.websrv.protocol.http.HttpRequest;
 import org.codejive.websrv.protocol.http.HttpResponse;
 
 /**
- *
+ * This servlet basically serves as a "switch board", distributing requests to
+ * other servlets depending on certain conditions and patterns found in the
+ * client request. The servlet manages a list of request matchers and their
+ * corresponding servlet. Each time a request matches a certain request matcher
+ * the request will be passed on to the corresponding servlet. Only the first
+ * servlet who's matcher matches the request will be executed.
+ * @see org.codejive.websrv.servlet.RequestMatch
  * @author Tako Schotanus &lt;tako AT codejive.org&gt;
  */
 public class RequestMatcherServlet implements Servlet {
 
     private ArrayList<RequestMatch> requestMatchers;
 
+	/**
+	 * Creates a new RequestMatcherServlet
+	 */
 	public RequestMatcherServlet() {
 		requestMatchers = new ArrayList<RequestMatch>();
 	}
 
+	/**
+	 * Returns the list of matchers configured for this servlet
+	 * @return a list of request matchers
+	 */
 	public ArrayList<RequestMatch> getRequestMatchers() {
 		return requestMatchers;
 	}
@@ -46,7 +59,7 @@ public class RequestMatcherServlet implements Servlet {
 	private String matches(RequestMatch match, String requestMethod, String requestHost, String requestPath) {
 		String result = null;
 		boolean matching = false;
-		if (match.getMethod().equals("*")) {
+		if ((match.getMethod() == null) || match.getMethod().equals("*")) {
 			matching = true;
 		} else {
 			// Silly way to check if the requst method appears in the list of supported methods
@@ -58,7 +71,7 @@ public class RequestMatcherServlet implements Servlet {
 		}
 		if (matching) {
 			String hostName = match.getHostName();
-            if (hostName.equals("*")) {
+            if ((hostName == null) || hostName.equals("*")) {
 				matching = true;
 			} else if (hostName.startsWith("*.")) {
                 String regex = "^" + hostName.replace("*.", ".{0,}?\\.?") + "$";
@@ -71,15 +84,10 @@ public class RequestMatcherServlet implements Servlet {
             }
 		}
 		if (matching) {
-			String[] matches = match.getPathMatcher().matches(requestPath);
-			if (matches != null) {
-				if (matches.length > 1) {
-					result = matches[1];
-				} else {
-					result = matches[0];
-				}
+			if (match.getPathMatcher() != null) {
+				result = match.getPathMatcher().matches(requestPath);
 			} else {
-    			result = null;
+				result = requestPath;
 			}
 		}
 		return result;
