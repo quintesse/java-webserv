@@ -439,8 +439,11 @@ public class HttpResponseImpl implements HttpResponse {
 			}
 			if (chunked) {
 				writeChunkSize(len);
+				out.write(b, off, len);
+				writeCRLF();
+			} else {
+				out.write(b, off, len);
 			}
-			out.write(b, off, len);
 			countWritten += len;
 		}
 		
@@ -479,10 +482,9 @@ public class HttpResponseImpl implements HttpResponse {
 		public void close() throws IOException {
 			if (chunked) {
 				// Write final empty chunk
-				// (NB: The extra leading CRLF is necessary for IE)
-				String finale = CRLF + "0" + CRLF + CRLF;
-				byte[] crlfBuf = finale.getBytes("UTF-8");
-				out.write(crlfBuf, 0, crlfBuf.length);
+				writeChunkSize(0);
+				// Write the final CRLF to terminate the chunked body
+				writeCRLF();
 			}
 			// We don't call super.close() here because that would close the socket!!!
 		}
@@ -510,6 +512,11 @@ public class HttpResponseImpl implements HttpResponse {
 			String hexSize = Integer.toHexString(size) + CRLF;
 			byte[] hexBuf = hexSize.getBytes("UTF-8");
 			out.write(hexBuf, 0, hexBuf.length);
+		}
+		
+		private void writeCRLF() throws IOException {
+			byte[] b = CRLF.getBytes("UTF-8");
+			out.write(b, 0, b.length);
 		}
 	}
 }
