@@ -22,10 +22,7 @@
 
 package org.codejive.websrv;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
 import java.io.IOException;
-import java.net.URL;
 import org.codejive.websrv.mimetype.MimeType;
 import org.codejive.websrv.config.HttpListenerConfig;
 import org.codejive.websrv.config.ServerConfig;
@@ -107,10 +104,6 @@ public class Main {
                 serverConfig.getListeners().add(listenerConfig);
 			}
 			
-//            XStream x = new XStream(new DomDriver());
-//            String xml = x.toXML(serverConfig);
-//            System.out.println(xml);
-
 			Server server = serverConfig.buildServer();
 			
 			// Bit of a hack this
