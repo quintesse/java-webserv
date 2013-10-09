@@ -74,6 +74,7 @@ public class DefaultMimeTypeHandler implements MimeTypeHandler {
             while ((len = resource.read(buf)) >= 0) {
                 out.write(buf, 0, len);
             }
+            out.write(buf, 0, 0); // HACK to handle empty resources
             out.flush();
         } finally {
             resource.close();
