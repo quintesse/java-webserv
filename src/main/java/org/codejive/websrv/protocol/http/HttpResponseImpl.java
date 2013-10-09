@@ -394,6 +394,7 @@ public class HttpResponseImpl implements HttpResponse {
 		 */
 		protected long countWritten;
 		
+        private boolean headersWritten;
 		private boolean chunked;
 		
 		/**
@@ -411,14 +412,21 @@ public class HttpResponseImpl implements HttpResponse {
 		}
 
 		/**
-		 * Perform a flsuh of our internal buffer writing its data to the
-		 * output stream that we wrap
+		 * Perform a flush of our internal buffer writing its data to the
+		 * output stream that we wrap. If no content was written yet a flush
+		 * will force the writing of the result code and headers thereby
+		 * committing the response.
 		 * @throws java.io.IOException Is thrown when the data could not be written
 		 */
 		private void flushBuffer() throws IOException {
 			if (count > 0) {
 				writeBytes(buf, 0, count);
 				count = 0;
+			} else {
+	            if (!headersWritten) {
+	                writeResultAndHeaders(out);
+	                headersWritten = true;
+	            }
 			}
 		}
 
@@ -431,11 +439,14 @@ public class HttpResponseImpl implements HttpResponse {
 		 * @throws java.io.IOException Is thrown when the data could not be written
 		 */
 		private void writeBytes(byte[] b, int off, int len) throws IOException {
-			if (countWritten == 0) {
+			if (!headersWritten) {
 				// The very first time
 				writeResultAndHeaders(out);
-				// Shall we use chunks?
-				chunked = "chunked".equalsIgnoreCase(getHeader("Transfer-Encoding"));
+				headersWritten = true;
+			}
+			if (countWritten == 0) {
+                // Shall we use chunks?
+                chunked = "chunked".equalsIgnoreCase(getHeader("Transfer-Encoding"));
 			}
 			if (chunked) {
 				writeChunkSize(len);
@@ -480,12 +491,17 @@ public class HttpResponseImpl implements HttpResponse {
 
 		@Override
 		public void close() throws IOException {
+            if (!headersWritten) {
+                writeResultAndHeaders(out);
+                headersWritten = true;
+            }
 			if (chunked) {
 				// Write final empty chunk
 				writeChunkSize(0);
 				// Write the final CRLF to terminate the chunked body
 				writeCRLF();
 			}
+			flush();
 			// We don't call super.close() here because that would close the socket!!!
 		}
 
@@ -502,7 +518,7 @@ public class HttpResponseImpl implements HttpResponse {
 		 * buffer to 0. This only works of no bytes were written yet to the client
 		 */
 		public synchronized void reset() {
-			if (countWritten > 0) {
+			if (headersWritten || countWritten > 0) {
 				throw new IllegalStateException("Output has already been written");
 			}
             count = 0;
