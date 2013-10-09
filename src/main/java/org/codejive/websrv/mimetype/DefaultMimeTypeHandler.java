@@ -49,7 +49,9 @@ public class DefaultMimeTypeHandler implements MimeTypeHandler {
         logger.info("Content length " + fileSize + " bytes");
         response.setHeader("Content-Length", String.valueOf(fileSize));
 		
-		process(new FileInputStream(resourceFile), request, response);
+        if (!"head".equalsIgnoreCase(request.getRequestMethod())) {
+            process(new FileInputStream(resourceFile), request, response);
+        }
 	}
 	
     public void process(URL resourceUrl, HttpRequest request, HttpResponse response) throws IOException {
@@ -62,7 +64,9 @@ public class DefaultMimeTypeHandler implements MimeTypeHandler {
 			logger.info("Content length could not be determined");
 		}
 		
-		process(resourceUrl.openStream(), request, response);
+        if (!"head".equalsIgnoreCase(request.getRequestMethod())) {
+            process(resourceUrl.openStream(), request, response);
+        }
     }
 
     public void process(InputStream resource, HttpRequest request, HttpResponse response) throws IOException {

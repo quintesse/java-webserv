@@ -185,9 +185,11 @@ public class PageMimeTypeHandler implements MimeTypeHandler {
 			response.setHeader("Transfer-Encoding", "chunked");
 		}
 		
-		OutputStreamWriter w = new OutputStreamWriter(response.getOutputStream());
-		processScript(script, w);
-		w.flush();
+        if (!"head".equalsIgnoreCase(request.getRequestMethod())) {
+    		OutputStreamWriter w = new OutputStreamWriter(response.getOutputStream());
+    		processScript(script, w);
+    		w.flush();
+        }
 	}
 	
 	// Removes the first LF or CR-LF terminated line from the text
