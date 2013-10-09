@@ -128,11 +128,11 @@ public class Main {
 			listenerConfig.setDefaultServlet(mainServlet);
 
 			FileServlet docServlet = new FileServlet("dist/javadoc", mimeTypes, welcomeFiles);
-			RequestMatch docMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("/javadoc(/**)?"), docServlet);
+			RequestMatch docMatcher = new RequestMatch("head,get,post", "*", new SimplePathMatcher("/javadoc(/**)?"), docServlet);
 			mainServlet.getRequestMatchers().add(docMatcher);
 
 			FileServlet defaultServlet = new FileServlet("ROOT_8090", mimeTypes, welcomeFiles);
-			RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultServlet);
+			RequestMatch defaultMatcher = new RequestMatch("head,get,post", "*", new SimplePathMatcher("**"), defaultServlet);
 			mainServlet.getRequestMatchers().add(defaultMatcher);
 
 			serverConfig.getListeners().add(listenerConfig);
@@ -145,7 +145,7 @@ public class Main {
 			listenerConfig.setDefaultServlet(mainServlet);
 
 			FileServlet defaultServlet = new FileServlet("ROOT_8091", mimeTypes, welcomeFiles);
-			RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultServlet);
+			RequestMatch defaultMatcher = new RequestMatch("head,get,post", "*", new SimplePathMatcher("**"), defaultServlet);
 			mainServlet.getRequestMatchers().add(defaultMatcher);
 
 			serverConfig.getListeners().add(listenerConfig);
@@ -162,7 +162,7 @@ public class Main {
 		listenerConfig.setDefaultServlet(mainServlet);
 
 		FileServlet defaultServlet = new FileServlet(path, mimeTypes, welcomeFiles);
-		RequestMatch defaultMatcher = new RequestMatch("get,post", "*", new SimplePathMatcher("**"), defaultServlet);
+		RequestMatch defaultMatcher = new RequestMatch("head,get,post", "*", new SimplePathMatcher("**"), defaultServlet);
 		mainServlet.getRequestMatchers().add(defaultMatcher);
 
 		serverConfig.getListeners().add(listenerConfig);
